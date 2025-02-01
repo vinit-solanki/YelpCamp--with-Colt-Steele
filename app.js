@@ -15,15 +15,16 @@ const reviewRoutes = require('./routes/reviews');
 const userRoutes = require('./routes/users');
 
 const session = require('express-session');
+const MongoDbStore = require('connect-mongo');
 const flash = require('connect-flash');
 const passport = require('passport');
 const LocalStrategy = require('passport-local');
 const User = require('./models/user');
 
-mongoose.connect("mongodb://localhost:27017/yelp-camp", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  }).then(() => {
+const dbUrl = 'mongodb://localhost:27017/yelp-camp';
+
+mongoose.connect(dbUrl)
+.then(() => {
     console.log("Database connected");
   }).catch(err => {
     console.error("Connection error", err);
@@ -41,7 +42,16 @@ app.set("views", path.join(__dirname, "views"));
 app.use(methodOverride('_method'));
 app.engine("ejs",ejsMate);
 app.use(express.static(path.join(__dirname, 'public')));
+const store = MongoDbStore.create({
+  mongoUrl: dbUrl,
+  touchAfter: 24 * 60 * 60,
+  crypto: {
+      secret: 'thisshouldbeabettersecret!'
+  }
+});
+
 const sessionConfig = {
+  store,
   secret: 'mySecret',
   resave: false,
   saveUninitialized: true,
