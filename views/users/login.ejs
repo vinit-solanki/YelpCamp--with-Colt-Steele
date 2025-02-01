@@ -1,23 +1,29 @@
 <% layout('layouts/boilerplate') %>
-<div class="d-flex justify-content-center align-items-center" style="height: 100vh;">
-    <div class="m-3 col-6">
-        <h1>Login</h1>
-        <form action="/login" method="POST" class="needs-validation" novalidate>
-    <div class="mb-3">
-        <label for="username" class="form-label">Username:</label>
-        <input type="text" class="form-control" id="username" name="username" required>
-        <div class="valid-feedback">
-            Looks good!
+
+<div class="d-flex justify-content-center align-items-center vh-100">
+    <div class="card shadow-lg p-4 col-10 col-md-6 col-lg-4">
+        <div class="card-body">
+            <h2 class="card-title text-center mb-4">Login</h2>
+            <form action="/login" method="POST" class="needs-validation" novalidate>
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username:</label>
+                    <input type="text" class="form-control" id="username" name="username" required>
+                    <div class="invalid-feedback">
+                        Please enter a valid username.
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password:</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                    <div class="invalid-feedback">
+                        Password is required.
+                    </div>
+                </div>
+                <button class="btn btn-success w-100" type="submit">Login</button>
+            </form>
+            <div class="text-center mt-3">
+                <small>Don't have an account? <a href="/register">Register here</a></small>
+            </div>
         </div>
     </div>
-    <div class="mb-3">
-        <label for="password" class="form-label">Password:</label>
-        <input type="password" class="form-control" id="password" name="password" required>
-        <div class="valid-feedback">
-            Looks good!
-        </div>
-    </div>
-    <button class="btn btn-success" type="submit">Submit</button>
-</form>
-</div>
 </div>

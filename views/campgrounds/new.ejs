@@ -1,55 +1,106 @@
 <% layout('layouts/boilerplate')%>
 <div class="row">
-    <h1 class="text-center">New Campground</h1>
-    <div class="col-6 offset-3">
-        <form action="/campgrounds" method="POST" class="needs-validation" novalidate enctype="multipart/form-data">
-            <div class="mb-3">
-                <label class="form-label" for="title">Title</label>
-                <input class="form-control" type="text" id="title" name="camp[title]" required>
-                <div class="valid-feedback">
-                    Looks good!
-                  </div>
-            </div>
-            <div class="mb-3">
-                <label class="form-label" for="location">Location</label>
-                <input class="form-control" type="text" id="location" name="camp[location]" required>
-                <div class="valid-feedback">
-                    Looks good!
-                </div>
-                <div class="invalid-feedback">
-                    Please provide a valid location.
-                  </div>
-    </div>
-            <div class="mb-3">
-                <label class="form-label" for="image">Image Url</label>
-                <input class="form-control" type="file" id="image" name="camp[image]" multiple required>
-                <div class="valid-feedback">
-      Optional!
-    </div>
-            </div>
-            <div class="mb-3">
-                <label class="form-label" for="price">Campground Price</label>
-                <div class="input-group">
-                    <span class="input-group-text" id="price-label">$</span>
-                    <input type="text" class="form-control" id="price" placeholder="0.00" aria-label="price"
-                        aria-describedby="price-label" name="camp[price]" required>
-                        <div class="valid-feedback">
-      Looks good!
-    </div>
-                </div>
-            </div>
+  <h1 class="text-center">New Campground</h1>
+  <div class="col-6 offset-3">
+    <form
+      action="/campgrounds"
+      method="POST"
+      class="needs-validation"
+      novalidate
+      enctype="multipart/form-data"
+    >
+      <div class="mb-3">
+        <label class="form-label" for="title">Title</label>
+        <input
+          class="form-control"
+          type="text"
+          id="title"
+          name="camp[title]"
+          required
+        />
+        <div class="valid-feedback">Looks good!</div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="location">Location</label>
+        <input
+          class="form-control"
+          type="text"
+          id="location"
+          name="camp[location]"
+          required
+        />
+        <div class="valid-feedback">Looks good!</div>
+        <div class="invalid-feedback">Please provide a valid location.</div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="image">Image Url</label>
+        <input
+          class="form-control"
+          type="file"
+          id="image"
+          name="image"
+          multiple
+          required
+        />
+        <div class="valid-feedback">Optional!</div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="price">Campground Price</label>
+        <div class="input-group">
+          <span class="input-group-text" id="price-label">$</span>
+          <input
+            type="text"
+            class="form-control"
+            id="price"
+            placeholder="0.00"
+            aria-label="price"
+            aria-describedby="price-label"
+            name="camp[price]"
+            required
+          />
+          <div class="valid-feedback">Looks good!</div>
+        </div>
+      </div>
 
-            <div class="mb-3">
-                <label class="form-label" for="description">Description</label>
-                <textarea class="form-control" type="text" id="description" name="camp[description]" required></textarea>
-                <div class="valid-feedback">
-      Looks good!
-    </div>
-            </div>
-            <div class="mb-3">
-                <button class="btn btn-success" type="submit">Add Campground</button>
-            </div>
-        </form>
-        <a href="/campgrounds">All Campgrounds</a>
-    </div>
+      <div class="mb-3">
+        <label class="form-label" for="description">Description</label>
+        <textarea
+          class="form-control"
+          type="text"
+          id="description"
+          name="camp[description]"
+          required
+        ></textarea>
+        <div class="valid-feedback">Looks good!</div>
+      </div>
+      <div class="mb-3">
+        <button class="btn btn-success" type="submit">Add Campground</button>
+      </div>
+    </form>
+    <a href="/campgrounds">All Campgrounds</a>
+  </div>
 </div>
+
+<script>
+  function initMap() {
+      let campground = "<%- JSON.stringify(camp) %>"; // JSON-safe object
+
+      // Check if campground and its geometry exist
+      const coordinates = campground.geometry?.coordinates?.length
+          ? { lat: campground.geometry.coordinates[1], lng: campground.geometry.coordinates[0] }
+          : { lat: 37.7749, lng: -122.4194 }; // Default location (San Francisco)
+
+      const map = new google.maps.Map(document.getElementById("map"), {
+          center: coordinates,
+          zoom: 10
+      });
+
+      new google.maps.Marker({
+          position: coordinates,
+          map: map,
+          title: campground.title || "New Campground"
+      });
+  }
+</script>
+<!-- Load Google Maps API -->
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAPS_API_KEY %>&callback=initMap"></script>

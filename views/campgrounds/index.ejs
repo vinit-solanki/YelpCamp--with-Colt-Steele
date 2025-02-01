@@ -1,14 +1,21 @@
 <% layout('layouts/boilerplate')%>
+<script src="https://cdn.jsdelivr.net/npm/mapbox-gl@2.4.1/dist/mapbox-gl.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/mapbox-gl@2.4.1/dist/mapbox-gl.css" rel="stylesheet" />
+<script>
+    const maptilerApiKey = '<%- process.env.MAPTILER_API_KEY %>';
+</script>
 
-<h1>All Campgrounds</h1>
+<div id="map" class="cluster-map"></div>
 <div>
-    <a href="/campgrounds/new">Add Campground</a>
+    <h1>All Campgrounds</h1>
+    <div>
+        <a href="/campgrounds/new">Add Campground</a>
 </div>
 <% for (let campground of campgrounds){%>
 <div class="card mb-3">
     <div class="row">
         <div class="col-md-4">
-            <img class="img-fluid" alt="" src="<%=campground.image%>">
+            <img class="img-fluid" alt="" src="<%=campground.images[0]%>">
         </div>
         <div class="col-md-8 p-2">
             <div class="card-body">
@@ -23,5 +30,138 @@
             </div>
         </div>
     </div>
+    </div>
 </div>
 <% }%>
+<script>
+    // Initialize the map with MapTiler API key
+    mapboxgl.accessToken = '<%- process.env.MAPTILER_API_KEY %>';
+    const map = new mapboxgl.Map({
+        container: 'map', // ID of the map container
+        style: 'https://api.maptiler.com/maps/basic/style.json?key=<%- process.env.MAPTILER_API_KEY %>', // Style URL
+        center: [72.958, 19.171], // Default center (you can change it)
+        zoom: 12 // Initial zoom level
+    });
+
+    // Create an empty GeoJSON object to hold the locations
+    const locations = [
+        <% campgrounds.forEach(function(campground) { %>
+        {
+            type: "Feature",
+            geometry: {
+                type: "Point",
+                coordinates: [<%= campground.longitude %>, <%= campground.latitude %>] // Make sure these are the correct keys for latitude and longitude
+            },
+            properties: {
+                title: "<%= campground.title %>",
+                description: "<%= campground.description %>",
+                location: "<%= campground.location %>"
+            }
+        },
+        <% }); %>
+    ];
+
+    // Create a new GeoJSON source and add it to the map
+    map.on('load', function() {
+    // Add clustered source
+    map.addSource('campgrounds', {
+        type: 'geojson',
+        data: {
+            type: 'FeatureCollection',
+            features: locations
+        },
+        cluster: true,
+        clusterMaxZoom: 14, // Max zoom level before clusters break apart
+        clusterRadius: 50 // Radius of clustering in pixels
+    });
+
+    // Cluster circles
+    map.addLayer({
+        id: 'campgrounds-clusters',
+        type: 'circle',
+        source: 'campgrounds',
+        filter: ['has', 'point_count'],
+        paint: {
+            'circle-color': [
+                'step',
+                ['get', 'point_count'],
+                '#51bbd6', 10,   // Blue for small clusters
+                '#f1f075', 50,   // Yellow for mid-size clusters
+                '#f28cb1'        // Pink for large clusters
+            ],
+            'circle-radius': [
+                'step',
+                ['get', 'point_count'],
+                15, 10, // Small size for 10 markers
+                25, 50, // Medium size for 50 markers
+                35      // Large size for more than 50 markers
+            ],
+            'circle-stroke-width': 2,
+            'circle-stroke-color': '#ffffff'
+        }
+    });
+
+    // Cluster count labels
+    map.addLayer({
+        id: 'campgrounds-cluster-counts',
+        type: 'symbol',
+        source: 'campgrounds',
+        filter: ['has', 'point_count'],
+        layout: {
+            'text-field': '{point_count_abbreviated}',
+            'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+            'text-size': 14
+        },
+        paint: {
+            'text-color': '#000000'
+        }
+    });
+
+    // Individual markers for campgrounds
+    map.addLayer({
+        id: 'campgrounds-markers',
+        type: 'circle',
+        source: 'campgrounds',
+        filter: ['!', ['has', 'point_count']],
+        paint: {
+            'circle-color': '#ff5733', // Red color for individual markers
+            'circle-radius': 6,
+            'circle-stroke-width': 1,
+            'circle-stroke-color': '#ffffff'
+        }
+    });
+
+    // Clicking on clusters expands them
+    map.on('click', 'campgrounds-clusters', function(e) {
+        const features = map.queryRenderedFeatures(e.point, { layers: ['campgrounds-clusters'] });
+        const clusterId = features[0].properties.cluster_id;
+        map.getSource('campgrounds').getClusterExpansionZoom(clusterId, function(err, zoom) {
+            if (err) return;
+            map.easeTo({
+                center: features[0].geometry.coordinates,
+                zoom: zoom
+            });
+        });
+    });
+
+    // Show popup on individual marker click
+    map.on('click', 'campgrounds-markers', function(e) {
+        const coordinates = e.features[0].geometry.coordinates.slice();
+        const title = e.features[0].properties.title;
+        const description = e.features[0].properties.description;
+
+        new mapboxgl.Popup()
+            .setLngLat(coordinates)
+            .setHTML('<h5>' + title + '</h5><p>' + description + '</p>')
+            .addTo(map);
+    });
+
+    // Change cursor to pointer when hovering over clusters
+    map.on('mouseenter', 'campgrounds-clusters', function() {
+        map.getCanvas().style.cursor = 'pointer';
+    });
+    map.on('mouseleave', 'campgrounds-clusters', function() {
+        map.getCanvas().style.cursor = '';
+    });
+});
+</script>
